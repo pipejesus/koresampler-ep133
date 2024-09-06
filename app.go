@@ -1,15 +1,13 @@
 package main
 
 import (
-	magnetofon "audioo/deck"
-	"audioo/visual"
 	"fmt"
+	magnetofon "koresampler/deck"
 )
 
 type App struct {
 	Deck  *magnetofon.Magnetofon
 	EP133 *magnetofon.EP133
-	UI    *visual.UI
 }
 
 func (a *App) PrintAudioSources() {
@@ -20,7 +18,6 @@ func (a *App) PrintAudioSources() {
 }
 
 func (a *App) Destroy() {
-	a.UI.Destroy()
 	a.Deck.TurnOff()
 }
 
@@ -31,8 +28,5 @@ func NewApp() *App {
 
 	ep133 := magnetofon.NewEP133()
 
-	ui := visual.NewUI()
-	ui.Init()
-
-	return &App{Deck: deck, EP133: ep133, UI: ui}
+	return &App{Deck: deck, EP133: ep133}
 }

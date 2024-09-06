@@ -9,16 +9,17 @@ import (
 )
 
 type Magnetofon struct {
-	AudioSource portaudio.DeviceInfo
-	Tape        *Tape
-	Stream      *portaudio.Stream
-	waitChan    chan os.Signal
-	recording   bool
-	Threshold   float64
-	timeStart   time.Time
-	timeFinish  time.Time
-	Bpm         float64
-	Steps       int32
+	AudioSource   portaudio.DeviceInfo
+	Tape          *Tape
+	Stream        *portaudio.Stream
+	waitChan      chan os.Signal
+	Recording     bool
+	Threshold     float64
+	timeStart     time.Time
+	timeFinish    time.Time
+	Bpm           float64
+	Steps         int32
+	CurrentVolume float64
 }
 
 func (m *Magnetofon) TurnOn() {
@@ -68,8 +69,7 @@ func (m *Magnetofon) StopAudioCapture() {
 	_ = m.Stream.Stop()
 }
 
-func (m *Magnetofon) UntilPatternEnd(sendChan chan string) {
-	//go func() {
+func (m *Magnetofon) UntilPatternEnd() {
 	waiting := true
 
 	for waiting {
@@ -77,25 +77,29 @@ func (m *Magnetofon) UntilPatternEnd(sendChan chan string) {
 			waiting = false
 		}
 	}
-
-	//sendChan <- MsgStop
-	//}()
 }
 
-func (m *Magnetofon) WaitForSignal(sendChan chan string) {
+func (m *Magnetofon) WaitForSignal() {
 	waiting := true
+	fmt.Println("Waiting for signal")
 
 	for waiting {
 		volume := m.calculateVolume(m.Tape.VACBuf)
-		//fmt.Printf("Volume: %.5f\n", volume)
+		m.CurrentVolume = volume
 
 		if volume > m.Threshold {
 			waiting = false
-			fmt.Println("Recording starts")
+			continue
 		}
-	}
 
-	//sendChan <- MsgStart
+	}
+}
+
+func (m *Magnetofon) UntilKeyPressed() {
+	// wait for the user to press any key using signals
+
+	var b = make([]byte, 1)
+	os.Stdin.Read(b)
 }
 
 func (m *Magnetofon) CalculateTimeFinish() {
@@ -106,23 +110,25 @@ func (m *Magnetofon) CalculateTimeFinish() {
 }
 
 func (m *Magnetofon) StartRecording() {
-	m.recording = true
+	m.Recording = true
 	m.CalculateTimeFinish()
 }
 
 func (m *Magnetofon) StopRecording() {
-	m.recording = false
+	m.Recording = false
 	actualDuration := time.Since(m.timeStart)
 	expectedDuration := m.timeFinish.Sub(m.timeStart)
-	lag := actualDuration - expectedDuration
-	fmt.Printf("Recording finished. Expected duration: %v, Actual duration: %v, Lag: %v\n", expectedDuration, actualDuration, lag)
+	_ = actualDuration - expectedDuration
+	//fmt.Printf("Recording finished. Expected duration: %v, Actual duration: %v, Lag: %v\n", expectedDuration, actualDuration, lag)
 }
 
 func (m *Magnetofon) CaptureAudio(in []float32) {
-	if !m.recording {
+
+	if !m.Recording {
 		m.Tape.VACBuf = in
 		return
 	}
+	m.CurrentVolume = m.calculateVolume(in)
 	m.Tape.Buf = append(m.Tape.Buf, in...)
 }
 
