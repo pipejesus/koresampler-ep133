@@ -89,10 +89,12 @@ func (m *Magnetofon) WaitForSignal() {
 
 		if volume > m.Threshold {
 			waiting = false
+
 			continue
 		}
-
 	}
+
+	m.Tape.Buf = m.Tape.VACBuf
 }
 
 func (m *Magnetofon) UntilKeyPressed() {
@@ -118,8 +120,8 @@ func (m *Magnetofon) StopRecording() {
 	m.Recording = false
 	actualDuration := time.Since(m.timeStart)
 	expectedDuration := m.timeFinish.Sub(m.timeStart)
-	_ = actualDuration - expectedDuration
-	//fmt.Printf("Recording finished. Expected duration: %v, Actual duration: %v, Lag: %v\n", expectedDuration, actualDuration, lag)
+	lag := actualDuration - expectedDuration
+	fmt.Printf("Recording finished. Expected duration: %v, Actual duration: %v, Lag: %v\n", expectedDuration, actualDuration, lag)
 }
 
 func (m *Magnetofon) CaptureAudio(in []float32) {
@@ -128,7 +130,9 @@ func (m *Magnetofon) CaptureAudio(in []float32) {
 		m.Tape.VACBuf = in
 		return
 	}
-	m.CurrentVolume = m.calculateVolume(in)
+
+	//m.CurrentVolume = m.calculateVolume(in)
+
 	m.Tape.Buf = append(m.Tape.Buf, in...)
 }
 
@@ -139,6 +143,8 @@ func (m *Magnetofon) calculateVolume(samples []float32) float64 {
 		sum += float64(sample * sample)
 	}
 
+	//fmt.Println("Length of samples: ", len(samples))
+
 	mean := float64(sum) / float64(len(samples))
 	return math.Sqrt(mean)
 }
@@ -148,5 +154,5 @@ func (m *Magnetofon) SaveTape() error {
 }
 
 func NewMagnetofon() *Magnetofon {
-	return &Magnetofon{Threshold: 0.002, Bpm: 120, Steps: 8}
+	return &Magnetofon{Threshold: 0.001, Bpm: 100, Steps: 8}
 }

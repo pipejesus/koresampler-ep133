@@ -1,7 +1,6 @@
 package main
 
 import (
-	"koresampler/ui"
 	"runtime"
 )
 
@@ -23,9 +22,9 @@ func main() {
 	app.Deck.StartRecording()
 	//fmt.Println("Recording started")
 
-	//app.Deck.UntilPatternEnd()
-	ui.Run(app.Deck)
-	app.Deck.UntilKeyPressed()
+	app.Deck.UntilPatternEnd()
+	//ui.Run(app.Deck)
+	//app.Deck.UntilKeyPressed()
 	app.Deck.StopRecording()
 	app.Deck.StopAudioCapture()
 	app.Deck.SaveTape()
