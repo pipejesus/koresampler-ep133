@@ -64,28 +64,16 @@ func (e *EP133) StartPlayback() {
 	}
 }
 
-func (e *EP133) ListenToContinueAndStop(sendChannel chan string) {
+func (e *EP133) ListenToMidiMessages(sendChannel chan string) {
 	if e.InPort == nil {
 		fmt.Println("No device found")
 		return
 	}
 
 	stopFunc, err := midi.ListenTo(e.InPort, func(msg midi.Message, timestampms int32) {
-
-		//if msg.Is(midi.TimingClockMsg) {
-		//	fmt.Println("KLOK!")
-		//}
-
-		messageStr := msg.Type().String()
-		switch messageStr {
-		case MsgStart:
+		switch {
+		case msg.Is(midi.ContinueMsg):
 			sendChannel <- MsgStart
-			fmt.Println("Received START from EP-133!")
-		case MsgStop:
-			sendChannel <- MsgStop
-			fmt.Println("Received STOP from EP-133!")
-		default:
-			fmt.Printf("Received unknown message: %s\n", messageStr)
 		}
 	}, midi.UseSysEx(), midi.UseTimeCode())
 

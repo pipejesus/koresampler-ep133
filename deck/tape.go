@@ -5,6 +5,7 @@ import (
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
 	"os"
+	"time"
 )
 
 type Tape struct {
@@ -13,7 +14,7 @@ type Tape struct {
 	VACBuf   []float32
 }
 
-func (t *Tape) Store() error {
+func (t *Tape) Store(excessLength time.Duration) error {
 	f, err := os.Create(t.FileName)
 	if err != nil {
 		return err
@@ -30,7 +31,7 @@ func (t *Tape) Store() error {
 	// find the first non-zero sample
 	var firstNonZeroSample int
 	for i, sample := range t.Buf {
-		if sample >= 0.002 {
+		if sample >= 0.005 {
 			firstNonZeroSample = i
 			break
 		}
@@ -38,15 +39,18 @@ func (t *Tape) Store() error {
 
 	fmt.Println("First non-zero sample: ", firstNonZeroSample)
 
-	// copy the rest of the buffer to a new buffer
-	trimmedBuf := t.Buf[firstNonZeroSample:]
+	//trimmedBuf := t.Buf[firstNonZeroSample:]
+	//trimmedBuf = trimmedBuf[:len(trimmedBuf)-int(excessLength.Seconds()*44100)]
+	//intBuf := make([]int, len(trimmedBuf))
+	//for i, sample := range trimmedBuf {
+	//	intBuf[i] = int(sample * 32768.0)
+	//}
 
-	intBuf := make([]int, len(trimmedBuf))
+	intBuf := make([]int, len(t.Buf))
 
-	for i, sample := range trimmedBuf {
+	for i, sample := range t.Buf {
 		intBuf[i] = int(sample * 32768.0)
 	}
-
 	err = enc.Write(&audio.IntBuffer{Data: intBuf, Format: &audio.Format{SampleRate: 44100, NumChannels: 1}})
 
 	return err

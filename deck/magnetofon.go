@@ -20,6 +20,7 @@ type Magnetofon struct {
 	Bpm           float64
 	Steps         int32
 	CurrentVolume float64
+	Lag           time.Duration
 }
 
 func (m *Magnetofon) TurnOn() {
@@ -105,7 +106,6 @@ func (m *Magnetofon) UntilKeyPressed() {
 }
 
 func (m *Magnetofon) CalculateTimeFinish() {
-	m.timeStart = time.Now()
 	durationMs := (60000.0 / m.Bpm) * float64(m.Steps)
 	durationUs := durationMs * 1000 // Convert milliseconds to microseconds
 	m.timeFinish = m.timeStart.Add(time.Duration(durationUs) * time.Microsecond)
@@ -113,6 +113,7 @@ func (m *Magnetofon) CalculateTimeFinish() {
 
 func (m *Magnetofon) StartRecording() {
 	m.Recording = true
+	m.timeStart = time.Now()
 	m.CalculateTimeFinish()
 }
 
@@ -120,8 +121,8 @@ func (m *Magnetofon) StopRecording() {
 	m.Recording = false
 	actualDuration := time.Since(m.timeStart)
 	expectedDuration := m.timeFinish.Sub(m.timeStart)
-	lag := actualDuration - expectedDuration
-	fmt.Printf("Recording finished. Expected duration: %v, Actual duration: %v, Lag: %v\n", expectedDuration, actualDuration, lag)
+	m.Lag = actualDuration - expectedDuration
+	fmt.Printf("Recording finished. Expected duration: %v, Actual duration: %v, Lag: %v\n", expectedDuration, actualDuration, m.Lag)
 }
 
 func (m *Magnetofon) CaptureAudio(in []float32) {
@@ -150,9 +151,9 @@ func (m *Magnetofon) calculateVolume(samples []float32) float64 {
 }
 
 func (m *Magnetofon) SaveTape() error {
-	return m.Tape.Store()
+	return m.Tape.Store(m.Lag)
 }
 
 func NewMagnetofon() *Magnetofon {
-	return &Magnetofon{Threshold: 0.001, Bpm: 100, Steps: 8}
+	return &Magnetofon{Threshold: 0.001, Bpm: 116, Steps: 16}
 }

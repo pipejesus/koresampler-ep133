@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"runtime"
 )
 
@@ -17,10 +18,12 @@ func main() {
 
 	//holdChan := make(chan string, 1)
 	//fmt.Println("Waiting for signal")
-
-	app.Deck.WaitForSignal()
+	ch := make(chan string, 1)
+	app.EP133.ListenToMidiMessages(ch)
+	<-ch
+	//app.Deck.WaitForSignal()
 	app.Deck.StartRecording()
-	//fmt.Println("Recording started")
+	fmt.Println("Recording started")
 
 	app.Deck.UntilPatternEnd()
 	//ui.Run(app.Deck)
